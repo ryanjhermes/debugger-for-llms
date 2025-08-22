@@ -15,7 +15,7 @@
   - Write unit tests for debug session management and event handling
   - _Requirements: 1.1, 1.2, 1.3, 8.4_
 
-- [ ] 3. Build Context Collector for runtime data capture
+- [x] 3. Build Context Collector for runtime data capture
   - Implement variable state collection from debug stack frames
   - Create stack trace extraction and formatting functionality
   - Add console output interception and structured logging
@@ -33,7 +33,7 @@
   - Write unit tests for data processing and privacy filtering
   - _Requirements: 4.1, 4.4, 5.4, 8.5_
 
-- [ ] 5. Develop Middleware Registry for framework instrumentation
+- [-] 5. Develop Middleware Registry for framework instrumentation
   - Create middleware interface and registration system
   - Implement Axios interceptor for HTTP request/response capture
   - Build Fetch API instrumentation for network monitoring

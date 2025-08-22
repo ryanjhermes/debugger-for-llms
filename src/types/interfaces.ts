@@ -111,6 +111,10 @@ export interface IContextCollector {
   collectStackTrace(thread: vscode.DebugThread): Promise<StackFrame[]>;
   collectConsoleOutput(output: ConsoleMessage): LogEntry;
   collectException(exception: ExceptionInfo): ExceptionData;
+  collectSourceCodeReference(file: string, line: number, contextLines?: number): Promise<string[]>;
+  getRecentConsoleOutput(count?: number): LogEntry[];
+  clearConsoleBuffer(): void;
+  getBufferSize(): number;
 }
 
 export interface IMiddlewareRegistry {
@@ -118,6 +122,11 @@ export interface IMiddlewareRegistry {
   unregisterMiddleware(name: string): void;
   instrumentFramework(framework: string): void;
   collectNetworkData(request: NetworkRequest, response: NetworkResponse): NetworkData;
+  getRecentNetworkActivity(count?: number): NetworkData[];
+  clearNetworkBuffer(): void;
+  getRegisteredMiddleware(): string[];
+  addEventListener(listener: (event: any) => void): void;
+  removeEventListener(listener: (event: any) => void): void;
 }
 
 export interface IDataProcessor {

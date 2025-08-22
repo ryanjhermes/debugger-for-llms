@@ -37,6 +37,7 @@ export class ExtensionContext {
       this.dataProcessor,
       this.aiServiceClient,
       this.uiController,
+      this.middlewareRegistry,
       this.outputChannel
     );
   }

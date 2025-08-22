@@ -4,6 +4,7 @@ import { ContextCollector } from './contextCollector';
 import { DataProcessor } from './dataProcessor';
 import { AIServiceClient } from './aiServiceClient';
 import { UIController } from '../ui/uiController';
+import { MiddlewareRegistry } from './middlewareRegistry';
 
 interface SessionData {
   session: vscode.DebugSession;
@@ -22,6 +23,7 @@ export class DebugSessionManager implements IDebugSessionManager {
     private dataProcessor: DataProcessor,
     private aiServiceClient: AIServiceClient,
     private uiController: UIController,
+    private middlewareRegistry: MiddlewareRegistry,
     private outputChannel: vscode.LogOutputChannel
   ) {}
 
@@ -260,6 +262,11 @@ export class DebugSessionManager implements IDebugSessionManager {
     const recentConsoleOutput = this.contextCollector.getRecentConsoleOutput(consoleEntryCount);
     this.outputChannel.debug(`Included ${recentConsoleOutput.length} recent console entries`);
     
+    // Get recent network activity from middleware registry
+    const networkEntryCount = eventType === 'exception' ? 10 : 5;
+    const recentNetworkActivity = this.middlewareRegistry.getRecentNetworkActivity(networkEntryCount);
+    this.outputChannel.debug(`Included ${recentNetworkActivity.length} recent network requests`);
+    
     const context: DebugContext = {
       sessionId: session.id,
       timestamp,
@@ -268,7 +275,7 @@ export class DebugSessionManager implements IDebugSessionManager {
       stackTrace,
       variables,
       consoleOutput: recentConsoleOutput,
-      networkActivity: [], // Will be populated by middleware in Task 5
+      networkActivity: recentNetworkActivity,
       exception: exception ? this.contextCollector.collectException(exception) : undefined
     };
     

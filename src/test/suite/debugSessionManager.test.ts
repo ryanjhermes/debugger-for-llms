@@ -6,6 +6,7 @@ import { DataProcessor } from '../../core/dataProcessor';
 import { AIServiceClient } from '../../core/aiServiceClient';
 import { UIController } from '../../ui/uiController';
 import { ConfigurationManager } from '../../core/configurationManager';
+import { MiddlewareRegistry } from '../../core/middlewareRegistry';
 
 suite('DebugSessionManager Test Suite', () => {
     let debugSessionManager: DebugSessionManager;
@@ -47,12 +48,14 @@ suite('DebugSessionManager Test Suite', () => {
         const dataProcessor = new DataProcessor(configManager);
         const aiServiceClient = new AIServiceClient(configManager, mockOutputChannel);
         const uiController = new UIController(mockContext, mockOutputChannel);
+        const middlewareRegistry = new MiddlewareRegistry(mockOutputChannel);
 
         debugSessionManager = new DebugSessionManager(
             contextCollector,
             dataProcessor,
             aiServiceClient,
             uiController,
+            middlewareRegistry,
             mockOutputChannel
         );
     });

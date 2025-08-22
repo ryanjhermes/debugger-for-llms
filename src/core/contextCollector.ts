@@ -439,4 +439,33 @@ export class ContextCollector implements IContextCollector {
       return null;
     }
   }
+
+  public async collectSourceCodeReference(file: string, line: number, contextLines: number = 5): Promise<string[]> {
+    try {
+      const document = await vscode.workspace.openTextDocument(file);
+      const totalLines = document.lineCount;
+      
+      const startLine = Math.max(0, line - contextLines - 1);
+      const endLine = Math.min(totalLines - 1, line + contextLines - 1);
+      
+      const codeLines: string[] = [];
+      for (let i = startLine; i <= endLine; i++) {
+        const lineText = document.lineAt(i).text;
+        const lineNumber = i + 1;
+        const marker = lineNumber === line ? '>>> ' : '    ';
+        codeLines.push(`${marker}${lineNumber}: ${lineText}`);
+      }
+      
+      this.outputChannel.debug(`Collected ${codeLines.length} lines of source context for ${file}:${line}`);
+      return codeLines;
+      
+    } catch (error) {
+      this.outputChannel.error(`Error collecting source code reference: ${error}`);
+      return [`Error reading source file: ${file}`];
+    }
+  }
+
+  public getBufferSize(): number {
+    return this.consoleOutputBuffer.length;
+  }
 }
