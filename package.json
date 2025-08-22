@@ -1,0 +1,106 @@
+{
+  "name": "debugger-for-llms",
+  "displayName": "AI-Powered Invisible Debugger",
+  "description": "Invisible debugging context collection for AI-powered error diagnosis",
+  "version": "0.1.0",
+  "publisher": "ryanjhermes",
+  "engines": {
+    "vscode": "^1.74.0"
+  },
+  "categories": [
+    "Debuggers",
+    "Other"
+  ],
+  "keywords": [
+    "debugging",
+    "ai",
+    "llm",
+    "observability",
+    "context"
+  ],
+  "activationEvents": [
+    "onDebugSessionStart",
+    "onCommand:debugger-for-llms.toggleAIMode",
+    "onCommand:debugger-for-llms.configure"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "debugger-for-llms.toggleAIMode",
+        "title": "Toggle AI Debug Mode",
+        "category": "AI Debugger"
+      },
+      {
+        "command": "debugger-for-llms.configure",
+        "title": "Configure AI Providers",
+        "category": "AI Debugger"
+      },
+      {
+        "command": "debugger-for-llms.showInsights",
+        "title": "Show AI Insights",
+        "category": "AI Debugger"
+      }
+    ],
+    "views": {
+      "explorer": [
+        {
+          "id": "aiDebuggerInsights",
+          "name": "AI Debug Insights",
+          "when": "debugger-for-llms.aiModeEnabled"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "AI Debugger",
+      "properties": {
+        "debugger-for-llms.aiProvider": {
+          "type": "string",
+          "enum": ["openai", "huggingface", "custom"],
+          "default": "openai",
+          "description": "AI provider for debug analysis"
+        },
+        "debugger-for-llms.enableAutoCollection": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically collect debug context"
+        },
+        "debugger-for-llms.privacyLevel": {
+          "type": "string",
+          "enum": ["strict", "moderate", "minimal"],
+          "default": "moderate",
+          "description": "Privacy level for data redaction"
+        },
+        "debugger-for-llms.maxContextSize": {
+          "type": "number",
+          "default": 10000,
+          "description": "Maximum context size in characters"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src --ext ts",
+    "test": "node ./out/test/runTest.js"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.74.0",
+    "@types/node": "16.x",
+    "@types/mocha": "^10.0.1",
+    "@types/glob": "^8.0.0",
+    "@typescript-eslint/eslint-plugin": "^5.45.0",
+    "@typescript-eslint/parser": "^5.45.0",
+    "eslint": "^8.28.0",
+    "typescript": "^4.9.4",
+    "@vscode/test-electron": "^2.2.0",
+    "mocha": "^10.1.0",
+    "glob": "^8.0.3"
+  },
+  "dependencies": {
+    "axios": "^1.6.0"
+  }
+}

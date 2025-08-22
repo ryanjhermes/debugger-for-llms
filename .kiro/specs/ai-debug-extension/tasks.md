@@ -1,6 +1,6 @@
 # Implementation Plan
 
-- [ ] 1. Set up VSCode extension project structure and core interfaces
+- [-] 1. Set up VSCode extension project structure and core interfaces
   - Create extension manifest (package.json) with VSCode engine requirements and activation events
   - Set up TypeScript configuration and build system with proper VSCode extension settings
   - Define core interfaces for all major components (IDebugSessionManager, IContextCollector, etc.)
