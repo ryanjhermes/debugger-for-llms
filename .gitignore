@@ -1,0 +1,44 @@
+# VSCode Extension
+out/
+node_modules/
+*.vsix
+.vscode-test/
+
+# TypeScript
+*.js.map
+*.d.ts
+dist/
+
+# Dependencies
+package-lock.json
+yarn.lock
+
+# Environment
+.env
+.env.local
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/settings.json
+.idea/
+
+# Logs
+*.log
+npm-debug.log*
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage directory used by tools like istanbul
+coverage/
+.nyc_output
+
+# Temporary folders
+tmp/
+temp/
