@@ -177,6 +177,42 @@ export class DebugSessionManager implements IDebugSessionManager {
     }
   }
 
+  public async onConsoleOutput(session: vscode.DebugSession, consoleMessage: any): Promise<void> {
+    this.outputChannel.debug(`Console output in session ${session.id}: ${consoleMessage.level}`);
+    
+    try {
+      // Collect console output through context collector
+      const logEntry = this.contextCollector.collectConsoleOutput(consoleMessage);
+      
+      // Add to session's console output if we're tracking this session
+      const sessionData = this.activeSessions.get(session.id);
+      if (sessionData) {
+        // Create a minimal context for console output
+        const context: DebugContext = {
+          sessionId: session.id,
+          timestamp: Date.now(),
+          eventType: 'console',
+          sourceLocation: { file: 'console', line: 0, column: 0 },
+          stackTrace: [],
+          variables: [],
+          consoleOutput: [logEntry],
+          networkActivity: [],
+        };
+        
+        // Add to session history
+        sessionData.contextHistory.push(context);
+        
+        // Keep only recent context
+        if (sessionData.contextHistory.length > 50) {
+          sessionData.contextHistory = sessionData.contextHistory.slice(-50);
+        }
+      }
+      
+    } catch (error) {
+      this.outputChannel.error(`Error handling console output: ${error}`);
+    }
+  }
+
   private async collectDebugContext(
     session: vscode.DebugSession,
     thread: vscode.DebugThread,
@@ -186,22 +222,43 @@ export class DebugSessionManager implements IDebugSessionManager {
   ): Promise<DebugContext> {
     const timestamp = Date.now();
     
-    // Get current stack trace
+    this.outputChannel.debug(`Collecting debug context for ${eventType} event in session ${session.id}`);
+    
+    // Get current stack trace with enhanced processing
     const stackTrace = await this.contextCollector.collectStackTrace(thread);
+    this.outputChannel.debug(`Collected ${stackTrace.length} stack frames`);
     
     // Get variables if we have a stack frame
     const variables = stackFrame ? await this.contextCollector.collectVariables(stackFrame) : [];
+    this.outputChannel.debug(`Collected ${variables.length} variables`);
     
-    // Build source location
-    const sourceLocation = stackFrame ? {
-      file: (stackFrame as any).source?.path || 'unknown',
-      line: (stackFrame as any).line || 0,
-      column: (stackFrame as any).column || 0
-    } : {
+    // Build source location from stack trace if no stack frame provided
+    let sourceLocation = {
       file: 'unknown',
       line: 0,
       column: 0
     };
+    
+    if (stackFrame) {
+      sourceLocation = {
+        file: (stackFrame as any).source?.path || 'unknown',
+        line: (stackFrame as any).line || 0,
+        column: (stackFrame as any).column || 0
+      };
+    } else if (stackTrace.length > 0) {
+      // Use top frame from stack trace
+      const topFrame = stackTrace[0];
+      sourceLocation = {
+        file: topFrame.file,
+        line: topFrame.line,
+        column: topFrame.column
+      };
+    }
+    
+    // Get recent console output for context (more entries for exceptions)
+    const consoleEntryCount = eventType === 'exception' ? 10 : 5;
+    const recentConsoleOutput = this.contextCollector.getRecentConsoleOutput(consoleEntryCount);
+    this.outputChannel.debug(`Included ${recentConsoleOutput.length} recent console entries`);
     
     const context: DebugContext = {
       sessionId: session.id,
@@ -210,10 +267,12 @@ export class DebugSessionManager implements IDebugSessionManager {
       sourceLocation,
       stackTrace,
       variables,
-      consoleOutput: [], // Will be populated by middleware
-      networkActivity: [], // Will be populated by middleware
+      consoleOutput: recentConsoleOutput,
+      networkActivity: [], // Will be populated by middleware in Task 5
       exception: exception ? this.contextCollector.collectException(exception) : undefined
     };
+    
+    this.outputChannel.debug(`Debug context collection completed for ${sourceLocation.file}:${sourceLocation.line}`);
     
     return context;
   }
@@ -224,39 +283,78 @@ export class DebugSessionManager implements IDebugSessionManager {
       return;
     }
     
-    // Add to session history
-    sessionData.contextHistory.push(context);
-    
-    // Keep only recent context (last 50 entries)
-    if (sessionData.contextHistory.length > 50) {
-      sessionData.contextHistory = sessionData.contextHistory.slice(-50);
-    }
-    
-    // Process context through data processor
-    const processedContext = this.dataProcessor.processContext(context);
-    const filteredContext = this.dataProcessor.applyPrivacyFilters(processedContext);
-    const aiReadyContext = this.dataProcessor.structureForAI(filteredContext);
-    
-    // Send to AI for analysis if enabled and we have meaningful context
-    if (this.shouldAnalyzeContext(context, highPriority)) {
-      try {
-        const provider = await this.getConfiguredAIProvider();
-        if (provider) {
-          const insights = await this.aiServiceClient.sendDiagnosticRequest(aiReadyContext, provider);
-          this.uiController.showInsights(insights);
+    try {
+      this.outputChannel.debug(`Processing debug context for session ${sessionId} (${context.eventType} event)`);
+      
+      // Add to session history
+      sessionData.contextHistory.push(context);
+      
+      // Keep only recent context (last 50 entries)
+      if (sessionData.contextHistory.length > 50) {
+        sessionData.contextHistory = sessionData.contextHistory.slice(-50);
+      }
+      
+      // Process context through enhanced data processor
+      const processedContext = this.dataProcessor.processContext(context);
+      this.outputChannel.debug(`Context processed: ${processedContext.variables.length} variables, ${processedContext.stackTrace.length} stack frames`);
+      
+      const filteredContext = this.dataProcessor.applyPrivacyFilters(processedContext);
+      const redactedCount = filteredContext.variables.filter(v => v.isRedacted).length;
+      this.outputChannel.debug(`Privacy filters applied: ${redactedCount} variables redacted`);
+      
+      const aiReadyContext = this.dataProcessor.structureForAI(filteredContext);
+      this.outputChannel.debug(`AI-ready context structured: ${aiReadyContext.summary}`);
+      
+      // Send to AI for analysis if enabled and we have meaningful context
+      if (this.shouldAnalyzeContext(context, highPriority)) {
+        try {
+          const provider = await this.getConfiguredAIProvider();
+          if (provider) {
+            this.outputChannel.debug('Sending context to AI service for analysis');
+            const insights = await this.aiServiceClient.sendDiagnosticRequest(aiReadyContext, provider);
+            this.uiController.showInsights(insights);
+            this.outputChannel.debug('AI analysis completed and insights displayed');
+          } else {
+            this.outputChannel.warn('No AI provider configured, skipping analysis');
+          }
+        } catch (error) {
+          this.outputChannel.error(`AI analysis failed: ${error}`);
+          
+          // Fallback: show basic context information
+          const basicInsights = {
+            analysis: `Debug context captured at ${context.sourceLocation.file}:${context.sourceLocation.line}\\n\\nEvent: ${context.eventType}\\nVariables: ${context.variables.length}\\nStack frames: ${context.stackTrace.length}`,
+            suggestedFixes: ['Check the debug console for more information', 'Verify variable values and types'],
+            confidence: 0.1,
+            relatedDocumentation: [],
+            followUpQuestions: ['What were you trying to accomplish when this occurred?']
+          };
+          this.uiController.showInsights(basicInsights);
         }
-      } catch (error) {
-        this.outputChannel.error(`AI analysis failed: ${error}`);
+      }
+      
+      // Update UI with enhanced status information
+      this.uiController.updateStatus({
+        aiModeEnabled: true,
+        activeProvider: 'openai',
+        lastAnalysis: new Date(),
+        contextCount: sessionData.contextHistory.length
+      });
+      
+      this.outputChannel.debug('Debug context processing completed successfully');
+      
+    } catch (error) {
+      this.outputChannel.error(`Error in processAndAnalyzeContext: ${error}`);
+      
+      // Ensure UI is still updated even if processing fails
+      try {
+        this.uiController.updateStatus({
+          aiModeEnabled: false,
+          contextCount: sessionData.contextHistory.length
+        });
+      } catch (uiError) {
+        this.outputChannel.error(`Failed to update UI status: ${uiError}`);
       }
     }
-    
-    // Update UI with context count
-    this.uiController.updateStatus({
-      aiModeEnabled: true,
-      activeProvider: 'openai',
-      lastAnalysis: new Date(),
-      contextCount: sessionData.contextHistory.length
-    });
   }
 
   private shouldAnalyzeContext(context: DebugContext, highPriority: boolean): boolean {

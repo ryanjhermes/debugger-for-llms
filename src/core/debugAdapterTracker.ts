@@ -135,13 +135,24 @@ export class DebugAdapterTracker implements vscode.DebugAdapterTracker {
   }
 
   private async handleOutputEvent(body: any): Promise<void> {
-    const { category, output, source, line, column } = body;
+    const { category, output } = body;
     
     // Log console output for context collection
     this.outputChannel.debug(`[${this.session.id}] Output (${category}): ${output.trim()}`);
     
-    // TODO: Forward to context collector for console output tracking
-    // This will be enhanced in Task 3
+    // Forward to debug session manager for context collection
+    if (output && output.trim()) {
+      const consoleMessage = {
+        level: category || 'log',
+        text: output,
+        timestamp: Date.now()
+      };
+      
+      // We'll add a method to handle console output in the debug session manager
+      if ((this.debugSessionManager as any).onConsoleOutput) {
+        await (this.debugSessionManager as any).onConsoleOutput(this.session, consoleMessage);
+      }
+    }
   }
 
   private async handleDebugResponse(message: any): Promise<void> {

@@ -7,7 +7,7 @@
   - Create basic extension entry point with activation/deactivation lifecycle
   - _Requirements: 7.1, 7.2_
 
-- [-] 2. Implement Debug Session Manager and VSCode API integration
+- [x] 2. Implement Debug Session Manager and VSCode API integration
   - Create DebugSessionManager class that hooks into vscode.debug API events
   - Implement session lifecycle management (start, stop, event handling)
   - Add debug session event listeners for breakpoints, exceptions, and step events
@@ -24,7 +24,7 @@
   - Write unit tests for all context collection methods
   - _Requirements: 1.2, 1.3, 1.4, 8.1, 8.2_
 
-- [ ] 4. Create Data Processor with privacy and filtering capabilities
+- [x] 4. Create Data Processor with privacy and filtering capabilities
   - Implement data aggregation from multiple collection sources
   - Build privacy filter system for PII and sensitive data redaction
   - Create structured JSON formatting for AI consumption

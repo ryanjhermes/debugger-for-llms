@@ -31,6 +31,9 @@ export interface VariableSnapshot {
   type: string;
   scope: 'local' | 'global' | 'closure';
   isRedacted: boolean;
+  valueType?: string;
+  isComplex?: boolean;
+  size?: number;
 }
 
 export interface LogEntry {
@@ -38,6 +41,7 @@ export interface LogEntry {
   message: string;
   timestamp: number;
   source?: string;
+  correlationId?: string;
 }
 
 export interface NetworkData {
@@ -49,6 +53,9 @@ export interface NetworkData {
   responseBody?: any;
   duration: number;
   timestamp: number;
+  domain?: string;
+  isExternal?: boolean;
+  category?: string;
 }
 
 export interface ExceptionInfo {
@@ -118,6 +125,8 @@ export interface IDataProcessor {
   applyPrivacyFilters(context: ProcessedContext): FilteredContext;
   structureForAI(context: FilteredContext): AIReadyContext;
   cleanupOldData(retentionPolicy: RetentionPolicy): void;
+  getContextHistory(sessionId: string): ProcessedContext[];
+  clearContextHistory(sessionId?: string): void;
 }
 
 export interface IAIServiceClient {
