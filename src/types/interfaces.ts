@@ -94,9 +94,9 @@ export interface AIProvider {
 export interface IDebugSessionManager {
   startSession(session: vscode.DebugSession): void;
   stopSession(session: vscode.DebugSession): void;
-  onBreakpoint(event: DebugBreakpointEvent): void;
-  onException(event: DebugExceptionEvent): void;
-  onStepComplete(event: DebugStepEvent): void;
+  onBreakpoint(event: DebugBreakpointEvent): Promise<void>;
+  onException(event: DebugExceptionEvent): Promise<void>;
+  onStepComplete(event: DebugStepEvent): Promise<void>;
 }
 
 export interface IContextCollector {
@@ -137,7 +137,7 @@ export interface IUIController {
 export interface DebugBreakpointEvent {
   session: vscode.DebugSession;
   thread: vscode.DebugThread;
-  stackFrame: vscode.DebugStackFrame;
+  stackFrame?: vscode.DebugStackFrame;
 }
 
 export interface DebugExceptionEvent {

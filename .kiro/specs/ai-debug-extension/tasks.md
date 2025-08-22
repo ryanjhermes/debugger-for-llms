@@ -1,13 +1,13 @@
 # Implementation Plan
 
-- [-] 1. Set up VSCode extension project structure and core interfaces
+- [ ] 1. Set up VSCode extension project structure and core interfaces
   - Create extension manifest (package.json) with VSCode engine requirements and activation events
   - Set up TypeScript configuration and build system with proper VSCode extension settings
   - Define core interfaces for all major components (IDebugSessionManager, IContextCollector, etc.)
   - Create basic extension entry point with activation/deactivation lifecycle
   - _Requirements: 7.1, 7.2_
 
-- [ ] 2. Implement Debug Session Manager and VSCode API integration
+- [-] 2. Implement Debug Session Manager and VSCode API integration
   - Create DebugSessionManager class that hooks into vscode.debug API events
   - Implement session lifecycle management (start, stop, event handling)
   - Add debug session event listeners for breakpoints, exceptions, and step events
